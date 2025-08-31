@@ -269,8 +269,26 @@ export class VapiClient {
     if (capturedId && capturedId !== this.sessionId) {
       this.sessionId = capturedId;
       this.sessionMetadata.sessionId = capturedId;
-      console.log('Captured VAPI session ID:', capturedId);
+      console.log('Captured VAPI session/call ID:', capturedId);
     }
+  }
+
+  /**
+   * Get the VAPI call ID (which is usually the same as session ID)
+   */
+  public getCallId(): string | null {
+    if (!this.vapi) return null;
+    
+    // Try to get the call ID from the VAPI instance
+    if ((this.vapi as any).call?.id) {
+      return (this.vapi as any).call.id;
+    } else if ((this.vapi as any).callId) {
+      return (this.vapi as any).callId;
+    } else if ((this.vapi as any).id) {
+      return (this.vapi as any).id;
+    }
+    
+    return this.sessionId; // Fallback to session ID
   }
 
   /**

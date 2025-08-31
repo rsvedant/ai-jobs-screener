@@ -188,12 +188,31 @@ export const getCandidateById = query({
       return null;
     }
     
-    // Get all sessions for this candidate
+    // Get all sessions for this candidate with assessment data
     const sessions = await ctx.db
       .query("sessions")
       .withIndex("by_candidate", (q) => q.eq("candidateId", candidateId))
       .order("desc")
       .collect();
+    
+    // Enrich sessions with assessment data
+    const enrichedSessions = await Promise.all(
+      sessions.map(async (session) => {
+        const assessment = await ctx.db
+          .query("assessments")
+          .withIndex("by_session", (q) => q.eq("sessionId", session._id))
+          .first();
+        
+        return {
+          ...session,
+          assessment: assessment ? {
+            overallScore: assessment.overallScore,
+            passed: assessment.passed,
+            completedAt: assessment.completedAt,
+          } : null,
+        };
+      })
+    );
     
     // Get all assessments for this candidate
     const assessments = await Promise.all(
@@ -211,7 +230,7 @@ export const getCandidateById = query({
     
     return {
       ...candidate,
-      sessions,
+      sessions: enrichedSessions,
       assessments: validAssessments,
       stats: {
         totalSessions: sessions.length,

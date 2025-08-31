@@ -1,6 +1,7 @@
 import { query, mutation, action } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 // ========================================
 // ACTIVE SESSION QUERIES
@@ -382,6 +383,7 @@ export const createSession = mutation({
     candidateId: v.id("candidates"),
     sessionId: v.string(), // From Vapi
     vapiSessionId: v.optional(v.string()),
+    vapiCallId: v.optional(v.string()), // VAPI call ID for API queries
   },
   handler: async (ctx, args) => {
     const candidate = await ctx.db.get(args.candidateId);
@@ -395,6 +397,7 @@ export const createSession = mutation({
       status: "created",
       startTime: Date.now(),
       vapiSessionId: args.vapiSessionId,
+      vapiCallId: args.vapiCallId,
       transcripts: [],
       hrMonitored: false,
     });
@@ -416,6 +419,7 @@ export const startSession = mutation({
   args: {
     sessionId: v.id("sessions"),
     vapiSessionId: v.optional(v.string()),
+    vapiCallId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const session = await ctx.db.get(args.sessionId);
@@ -427,7 +431,71 @@ export const startSession = mutation({
       status: "active",
       startTime: Date.now(),
       vapiSessionId: args.vapiSessionId,
+      vapiCallId: args.vapiCallId,
     });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Update session with VAPI call ID (can be called after session start when call ID becomes available)
+ */
+export const updateVapiCallId = mutation({
+  args: {
+    sessionId: v.id("sessions"),
+    vapiCallId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) {
+      throw new Error("Session not found");
+    }
+
+    await ctx.db.patch(args.sessionId, {
+      vapiCallId: args.vapiCallId,
+    });
+
+    console.log("📞 Updated session with VAPI call ID:", args.vapiCallId);
+    return { success: true };
+  },
+});
+
+/**
+ * Add a single transcript entry to a session (real-time)
+ */
+export const addTranscript = mutation({
+  args: {
+    sessionId: v.id("sessions"),
+    transcript: v.object({
+      id: v.string(),
+      text: v.string(),
+      role: v.union(v.literal("user"), v.literal("assistant")),
+      timestamp: v.number(),
+      confidence: v.optional(v.number()),
+      isFinal: v.boolean()
+    }),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) {
+      throw new Error("Session not found");
+    }
+
+    // Append the new transcript to existing transcripts
+    const updatedTranscripts = [...(session.transcripts || []), args.transcript];
+
+    await ctx.db.patch(args.sessionId, {
+      transcripts: updatedTranscripts,
+    });
+
+    // Note: Automatic background assessment disabled - use manual "Create Assessment" button
+    // const finalTranscripts = updatedTranscripts.filter(t => t.isFinal);
+    // if (finalTranscripts.length >= 5) { 
+    //   ctx.scheduler.runAfter(1000, internal.assessments.evaluateSessionTranscripts, {
+    //     sessionId: args.sessionId,
+    //   });
+    // }
 
     return { success: true };
   },

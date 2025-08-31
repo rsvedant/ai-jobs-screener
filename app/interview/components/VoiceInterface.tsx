@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useVapi } from "../../../lib/vapi/hooks";
 
 interface VoiceInterfaceProps {
-  onSessionStart?: (sessionId: string) => void;
-  onSessionEnd?: (sessionId: string, duration: number) => void;
+  onSessionStart?: (sessionId: string, callId?: string) => void;
+  onSessionEnd?: (sessionId: string, duration: number, callId?: string) => void;
   onTranscript?: (transcript: string, role: 'user' | 'assistant') => void;
   candidateEmail?: string;
   candidatePosition?: string;
@@ -18,7 +18,7 @@ export default function VoiceInterface({
   candidateEmail,
   candidatePosition 
 }: VoiceInterfaceProps) {
-  const { isConnected, isConnecting, isListening, isSpeaking, error, connect, disconnect, transcripts, sessionId, initialize, isInitialized } = useVapi({
+  const { isConnected, isConnecting, isListening, isSpeaking, error, connect, disconnect, transcripts, sessionId, callId, initialize, isInitialized } = useVapi({
     // For testing - replace with your actual VAPI keys
     publicKey: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || 'demo-key',
     assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || 'demo-assistant',
@@ -93,19 +93,21 @@ export default function VoiceInterface({
   useEffect(() => {
     if (isConnected && sessionId && sessionStartTime && !hasCalledSessionStart) {
       console.log('🎯 Real VAPI session ID captured:', sessionId);
-      console.log('📞 Calling onSessionStart with real VAPI session ID');
-      onSessionStart?.(sessionId);
+      console.log('📞 Real VAPI call ID captured:', callId);
+      console.log('📞 Calling onSessionStart with real VAPI session/call IDs');
+      onSessionStart?.(sessionId, callId || sessionId);
       setHasCalledSessionStart(true);
     }
-  }, [isConnected, sessionId, sessionStartTime, hasCalledSessionStart, onSessionStart]);
+  }, [isConnected, sessionId, callId, sessionStartTime, hasCalledSessionStart, onSessionStart]);
 
   const endInterview = async () => {
     if (sessionStartTime && sessionId) {
       const duration = Date.now() - sessionStartTime;
       
       console.log("🔚 Ending interview with VAPI session ID:", sessionId);
+      console.log("🔚 Ending interview with VAPI call ID:", callId);
       console.log("⏱️ Interview duration:", Math.round(duration / 1000), "seconds");
-      onSessionEnd?.(sessionId, duration);
+      onSessionEnd?.(sessionId, duration, callId || sessionId);
     } else {
       console.warn("⚠️ No valid session to end - sessionStartTime:", sessionStartTime, "sessionId:", sessionId);
       

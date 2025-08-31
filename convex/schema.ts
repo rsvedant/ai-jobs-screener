@@ -26,15 +26,16 @@ export default defineSchema({
     
     // Voice interaction data
     vapiSessionId: v.optional(v.string()), // Vapi-specific session ID
+    vapiCallId: v.optional(v.string()), // Vapi call ID for API queries
     recordingUrl: v.optional(v.string()), // Audio recording URL
-    transcripts: v.array(v.object({
+    transcripts: v.optional(v.array(v.object({
       id: v.string(),
       text: v.string(),
       role: v.union(v.literal("user"), v.literal("assistant")),
       timestamp: v.number(),
       confidence: v.optional(v.number()),
       isFinal: v.boolean()
-    })),
+    }))),
     
     // Connection and quality metrics
     connectionQuality: v.optional(v.object({

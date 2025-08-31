@@ -501,5 +501,6 @@ export function useVapi(options?: Partial<VapiClientOptions>) {
     // Data
     transcripts: manager.transcripts,
     sessionId: manager.client?.getSessionId() || null,
+    callId: manager.client?.getCallId() || null,
   };
 }

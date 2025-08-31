@@ -26,6 +26,8 @@ export default function InterviewPage() {
   const completeSession = useMutation(api.sessions.completeSession);
   const createCandidate = useMutation(api.candidates.createCandidate);
   const processVapiSession = useMutation(api.vapiIntegration.processVapiSession);
+  const addTranscript = useMutation(api.sessions.addTranscript);
+  const updateVapiCallId = useMutation(api.sessions.updateVapiCallId);
 
   const handleStartInterview = () => {
     if (!candidateInfo.position) {
@@ -37,8 +39,9 @@ export default function InterviewPage() {
 
 
 
-  const handleSessionStart = async (vapiSessionId: string) => {
+  const handleSessionStart = async (vapiSessionId: string, vapiCallId?: string) => {
     console.log("Session starting with VAPI session ID:", vapiSessionId);
+    console.log("Session starting with VAPI call ID:", vapiCallId);
     try {
       // Create candidate record - use email or generate one
       const email = candidateInfo.email || `candidate_${Date.now()}@temporary.com`;
@@ -55,15 +58,17 @@ export default function InterviewPage() {
       
       console.log("Created candidate:", candidateId);
 
-      // Create session record using the actual VAPI session ID
+      // Create session record using the actual VAPI session ID and call ID
       const newSessionId = await createSession({
         candidateId,
         sessionId: vapiSessionId, // Use the real VAPI session ID
         vapiSessionId: vapiSessionId, // Store VAPI session ID for reference
+        vapiCallId: vapiCallId, // Store VAPI call ID for API queries
       });
       
       console.log("✅ Created session with ID:", newSessionId);
       console.log("🔗 Linked to VAPI session:", vapiSessionId);
+      console.log("📞 Linked to VAPI call:", vapiCallId);
       console.log("👤 For candidate:", candidateId);
       setSessionId(newSessionId);
     } catch (error) {
@@ -71,12 +76,25 @@ export default function InterviewPage() {
     }
   };
 
-  const handleSessionEnd = async (voiceSessionId: string, duration: number) => {
-    console.log("Session ending:", { voiceSessionId, duration, sessionId });
+  const handleSessionEnd = async (voiceSessionId: string, duration: number, vapiCallId?: string) => {
+    console.log("Session ending:", { voiceSessionId, duration, sessionId, vapiCallId });
     setSessionDuration(duration);
     
     if (sessionId) {
       try {
+        // Update call ID if we have one and it wasn't set during creation
+        if (vapiCallId && vapiCallId !== voiceSessionId) {
+          try {
+            await updateVapiCallId({
+              sessionId,
+              vapiCallId: vapiCallId,
+            });
+            console.log("✅ Updated session with VAPI call ID:", vapiCallId);
+          } catch (updateError) {
+            console.warn("⚠️ Failed to update call ID:", updateError);
+          }
+        }
+
         if (voiceSessionId && voiceSessionId !== "fallback-session") {
           // Try to fetch real VAPI session data
           const vapiResponse = await fetch(`https://api.vapi.ai/call/${voiceSessionId}`, {
@@ -142,9 +160,28 @@ export default function InterviewPage() {
     setCurrentStep("complete");
   };
 
-  const handleTranscript = (transcript: string, role: 'user' | 'assistant') => {
-    // Could store transcripts for later use
+  const handleTranscript = async (transcript: string, role: 'user' | 'assistant') => {
     console.log(`${role}: ${transcript}`);
+    
+    // Store transcript in real-time if we have a session
+    if (sessionId && transcript.trim()) {
+      try {
+        await addTranscript({
+          sessionId,
+          transcript: {
+            id: `transcript_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            text: transcript,
+            role,
+            timestamp: Date.now(),
+            confidence: 1.0,
+            isFinal: true,
+          },
+        });
+        console.log("✅ Stored transcript:", { role, text: transcript.substring(0, 50) + "..." });
+      } catch (error) {
+        console.error("❌ Failed to store transcript:", error);
+      }
+    }
   };
 
   // Cleanup: Ensure session is completed when component unmounts
@@ -334,10 +371,10 @@ export default function InterviewPage() {
 
             <div className="text-center">
               <button
-                onClick={() => window.location.href = "/"}
+                onClick={() => window.location.href = "/dashboard/"}
                 className="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 transition-colors"
               >
-                Return to Home
+                See how your interview went and how your score was calculated
               </button>
             </div>
           </div>

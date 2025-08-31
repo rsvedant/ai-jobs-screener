@@ -17,8 +17,10 @@ import type * as assessments from "../assessments.js";
 import type * as auth from "../auth.js";
 import type * as candidates from "../candidates.js";
 import type * as http from "../http.js";
+import type * as internal_ from "../internal.js";
 import type * as sessions from "../sessions.js";
 import type * as testData from "../testData.js";
+import type * as vapiApi from "../vapiApi.js";
 import type * as vapiIntegration from "../vapiIntegration.js";
 
 /**
@@ -34,8 +36,10 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   candidates: typeof candidates;
   http: typeof http;
+  internal: typeof internal_;
   sessions: typeof sessions;
   testData: typeof testData;
+  vapiApi: typeof vapiApi;
   vapiIntegration: typeof vapiIntegration;
 }>;
 export declare const api: FilterApi<

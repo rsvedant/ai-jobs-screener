@@ -1,10 +1,11 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Id } from "../../../../convex/_generated/dataModel";
+import TranscriptViewer from "./components/TranscriptViewer";
 
 // Status badge component
 function StatusBadge({ status }: { status: string }) {
@@ -44,7 +45,11 @@ function TradeBadge({ category }: { category: string }) {
 }
 
 // Session row component
-function SessionRow({ session }: { session: any }) {
+function SessionRow({ session, onCreateAssessment, isCreatingAssessment }: { 
+  session: any, 
+  onCreateAssessment: (sessionId: string) => void,
+  isCreatingAssessment: string | null 
+}) {
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / (1000 * 60));
     const seconds = Math.floor((ms % (1000 * 60)) / 1000);
@@ -90,8 +95,21 @@ function SessionRow({ session }: { session: any }) {
           <span className="text-blue-600 cursor-pointer hover:text-blue-800">
             View Transcript ({session.transcripts.length} entries)
           </span>
+        ) : session.vapiSessionId ? (
+          <span className="text-yellow-600">Available from VAPI</span>
         ) : (
           <span className="text-gray-500">No transcript</span>
+        )}
+      </td>
+      <td className="px-6 py-4 text-sm text-gray-900">
+        {session.status === "completed" && !session.assessment && session.vapiSessionId && (
+          <button
+            onClick={() => onCreateAssessment(session._id)}
+            disabled={isCreatingAssessment === session._id}
+            className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50"
+          >
+            {isCreatingAssessment === session._id ? "Creating..." : "Create Assessment"}
+          </button>
         )}
       </td>
     </tr>
@@ -104,11 +122,46 @@ export default function CandidateDetailPage() {
   const candidateId = params.candidateId as Id<"candidates">;
   
   const [activeTab, setActiveTab] = useState<"overview" | "sessions" | "assessments">("overview");
+  const [isCreatingAssessment, setIsCreatingAssessment] = useState<string | null>(null);
 
   // Query candidate details
   const candidate = useQuery(api.candidates.getCandidateById, {
     candidateId,
   });
+
+  // Mutation for creating assessments from transcripts
+  const createAssessmentFromTranscripts = useMutation(api.assessments.triggerTranscriptAssessment);
+  const createAssessmentFromVapi = useAction(api.vapiApi.fetchVapiDataAndCreateAssessment);
+
+  const handleCreateAssessment = async (sessionId: Id<"sessions">) => {
+    setIsCreatingAssessment(sessionId);
+    try {
+      // Find the session to get vapiSessionId
+      const session = candidate?.sessions.find(s => s._id === sessionId);
+      if (!session) {
+        throw new Error("Session not found");
+      }
+
+      if (session.vapiCallId) {
+        // Use VAPI API to fetch data and create assessment
+        console.log("📞 Creating assessment from VAPI data using call ID:", session.vapiCallId);
+        await createAssessmentFromVapi({ 
+          sessionId, 
+          vapiCallId: session.vapiCallId 
+        });
+      } else {
+        // Fallback to transcript-based evaluation
+        console.log("📝 Creating assessment from stored transcripts");
+        await createAssessmentFromTranscripts({ sessionId });
+      }
+      console.log("✅ Assessment created successfully");
+    } catch (error) {
+      console.error("❌ Failed to create assessment:", error);
+      alert(`Failed to create assessment: ${error.message}`);
+    } finally {
+      setIsCreatingAssessment(null);
+    }
+  };
 
   if (candidate === undefined) {
     return (
@@ -337,11 +390,19 @@ export default function CandidateDetailPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Transcript
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {candidate.sessions.map((session) => (
-                    <SessionRow key={session._id} session={session} />
+                    <SessionRow 
+                      key={session._id} 
+                      session={session} 
+                      onCreateAssessment={handleCreateAssessment}
+                      isCreatingAssessment={isCreatingAssessment}
+                    />
                   ))}
                 </tbody>
               </table>
