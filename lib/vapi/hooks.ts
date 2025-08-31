@@ -421,7 +421,7 @@ export function useMicrophoneTest(client: VapiClient | null): UseMicrophoneTestR
     }
   }, [client, micTestResult, isTestingMic, testMicrophone]);
 
-  const isMicReady = micTestResult?.isWorking && micTestResult.quality !== 'poor';
+  const isMicReady = !!(micTestResult?.isWorking && micTestResult.quality !== 'poor');
 
   return {
     micTestResult,
@@ -473,5 +473,33 @@ export function useVoiceManager(options?: Partial<VapiClientOptions>) {
     isFullyReady,
     hasErrors,
     allErrors
+  };
+}
+
+/**
+ * Simplified hook for basic VAPI functionality (alias for useVoiceManager)
+ */
+export function useVapi(options?: Partial<VapiClientOptions>) {
+  const manager = useVoiceManager(options);
+  
+  return {
+    // Core functionality
+    isConnected: manager.isConnected,
+    isConnecting: manager.connectionStatus.isConnecting || false,
+    isListening: manager.voiceState === 'listening',
+    isSpeaking: manager.voiceState === 'speaking',
+    error: manager.allErrors[0] || null,
+    
+    // Initialization
+    isInitialized: manager.isInitialized,
+    initialize: manager.initialize,
+    
+    // Actions
+    connect: manager.startSession,
+    disconnect: manager.stopSession,
+    
+    // Data
+    transcripts: manager.transcripts,
+    sessionId: manager.client?.getSessionId() || null,
   };
 }

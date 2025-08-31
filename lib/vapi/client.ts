@@ -98,12 +98,33 @@ export class VapiClient {
       }
 
       this.setState('connecting');
+      this.connectionStatus = { isConnected: false, isConnecting: true };
 
       // Start with the assistant ID - Vapi SDK will handle transcriber/voice config
       await this.vapi.start(this.options.assistantId);
       
+      // Try to capture the session ID immediately after starting
+      this.tryCapturingSessionId();
+      
+      // If we didn't get the session ID immediately, try polling for it
+      if (!this.sessionId || this.sessionId.includes('temp-')) {
+        const pollAttempts = 10;
+        let attempts = 0;
+        
+        const pollForSessionId = () => {
+          this.tryCapturingSessionId();
+          attempts++;
+          
+          if ((!this.sessionId || this.sessionId.includes('temp-')) && attempts < pollAttempts) {
+            setTimeout(pollForSessionId, 100); // Try again in 100ms
+          }
+        };
+        
+        setTimeout(pollForSessionId, 100);
+      }
+      
       this.setState('connected');
-      this.connectionStatus = { isConnected: true };
+      this.connectionStatus = { isConnected: true, isConnecting: false };
       this.sessionMetadata.status = 'active';
 
       return this.getSessionControls();
@@ -202,6 +223,13 @@ export class VapiClient {
   }
 
   /**
+   * Get current session ID
+   */
+  public getSessionId(): string {
+    return this.sessionId;
+  }
+
+  /**
    * Get all transcripts
    */
   public getTranscripts(): TranscriptMessage[] {
@@ -222,6 +250,30 @@ export class VapiClient {
   }
 
   /**
+   * Try to capture the session ID from VAPI
+   */
+  private tryCapturingSessionId(): void {
+    if (!this.vapi) return;
+    
+    // Try multiple ways to get the session ID
+    let capturedId = null;
+    
+    if ((this.vapi as any).call?.id) {
+      capturedId = (this.vapi as any).call.id;
+    } else if ((this.vapi as any).callId) {
+      capturedId = (this.vapi as any).callId;
+    } else if ((this.vapi as any).id) {
+      capturedId = (this.vapi as any).id;
+    }
+    
+    if (capturedId && capturedId !== this.sessionId) {
+      this.sessionId = capturedId;
+      this.sessionMetadata.sessionId = capturedId;
+      console.log('Captured VAPI session ID:', capturedId);
+    }
+  }
+
+  /**
    * Set up Vapi event listeners
    */
   private setupEventListeners(): void {
@@ -239,13 +291,17 @@ export class VapiClient {
 
     this.vapi.on('call-start', () => {
       this.setState('connected');
-      this.connectionStatus = { isConnected: true };
+      this.connectionStatus = { isConnected: true, isConnecting: false };
+      
+      // Try to get the session ID from the VAPI instance
+      this.tryCapturingSessionId();
+      
       this.eventHandlers.onConnected?.();
     });
 
     this.vapi.on('call-end', () => {
       this.setState('disconnected');
-      this.connectionStatus = { isConnected: false };
+      this.connectionStatus = { isConnected: false, isConnecting: false };
       this.sessionMetadata.endTime = Date.now();
       this.sessionMetadata.duration = this.sessionMetadata.endTime - this.sessionMetadata.startTime;
       this.sessionMetadata.status = 'completed';

@@ -3,6 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useState } from "react";
+import Link from "next/link";
 
 // Status badge component
 function StatusBadge({ status }: { status: string }) {
@@ -86,7 +87,7 @@ export default function CandidatesPage() {
               placeholder="Name, email, or position..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
           </div>
 
@@ -99,7 +100,7 @@ export default function CandidatesPage() {
               id="status"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             >
               <option value="">All Statuses</option>
               <option value="invited">Invited</option>
@@ -120,7 +121,7 @@ export default function CandidatesPage() {
               id="trade"
               value={tradeFilter}
               onChange={(e) => setTradeFilter(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             >
               <option value="">All Trades</option>
               <option value="construction">Construction</option>
@@ -203,9 +204,14 @@ export default function CandidatesPage() {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {candidate.firstName && candidate.lastName 
-                              ? `${candidate.firstName} ${candidate.lastName}`
-                              : "No name provided"}
+                            <Link 
+                              href={`/dashboard/candidates/${candidate._id}`}
+                              className="hover:text-blue-600 hover:underline"
+                            >
+                              {candidate.firstName && candidate.lastName 
+                                ? `${candidate.firstName} ${candidate.lastName}`
+                                : "No name provided"}
+                            </Link>
                             {candidate.flagged && (
                               <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                                 🚩 Flagged

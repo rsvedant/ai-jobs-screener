@@ -19,6 +19,7 @@ import type * as candidates from "../candidates.js";
 import type * as http from "../http.js";
 import type * as sessions from "../sessions.js";
 import type * as testData from "../testData.js";
+import type * as vapiIntegration from "../vapiIntegration.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   sessions: typeof sessions;
   testData: typeof testData;
+  vapiIntegration: typeof vapiIntegration;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

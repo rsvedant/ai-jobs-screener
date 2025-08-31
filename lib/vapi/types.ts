@@ -15,6 +15,7 @@ export type AudioQuality = 'poor' | 'fair' | 'good' | 'excellent';
  */
 export interface ConnectionStatus {
   isConnected: boolean;
+  isConnecting?: boolean;
   latency?: number;
   audioQuality?: AudioQuality;
   error?: string;
