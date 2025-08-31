@@ -45,7 +45,7 @@ Based on PRD: `prd-blue-collar-voice-agent-job-screener.md`
 - `app/dashboard/components/CandidateCard.tsx` - Individual candidate display component
 - `app/dashboard/components/ScoreDisplay.tsx` - Score visualization component
 - `app/dashboard/components/SessionTable.tsx` - Sortable session/candidate table
-- `app/interview/page.tsx` - Main candidate interview interface
+- `app/interview/page.tsx` - ✅ Simplified candidate interview interface with demo voice workflow, question progression, and session recording
 - `app/interview/[sessionId]/page.tsx` - Individual session interview page
 - `app/interview/components/VoiceInterface.tsx` - Voice interaction UI component
 - `app/interview/components/MicTest.tsx` - Microphone testing component
@@ -101,8 +101,8 @@ Based on PRD: `prd-blue-collar-voice-agent-job-screener.md`
   - [ ] 3.6 Implement side-by-side candidate comparison functionality
   - [ ] 3.7 Create responsive design for mobile HR manager access
 
-- [ ] 4.0 Candidate Interview Interface & Voice Flow
-  - [ ] 4.1 Build candidate landing page with clear instructions and accessibility features
+- [x] 4.0 Candidate Interview Interface & Voice Flow (MVP)
+  - [x] 4.1 Build simplified candidate landing page with demo voice interview workflow
   - [ ] 4.2 Create microphone testing component with automated audio quality validation
   - [ ] 4.3 Implement voice interface UI with visual feedback (speaking/listening states)
   - [ ] 4.4 Build question flow management with dynamic progression logic

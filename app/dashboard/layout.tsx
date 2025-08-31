@@ -14,6 +14,7 @@ export default function DashboardLayout({
     { href: "/dashboard", label: "Overview", icon: "📊" },
     { href: "/dashboard/sessions", label: "Live Sessions", icon: "🎙️" },
     { href: "/dashboard/candidates", label: "Candidates", icon: "👥" },
+    { href: "/interview", label: "Test Interview", icon: "🎤" },
   ];
 
   const isActive = (href: string) => {
