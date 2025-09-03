@@ -95,32 +95,11 @@ export default function InterviewPage() {
           }
         }
 
-        if (voiceSessionId && voiceSessionId !== "fallback-session") {
-          // Try to fetch real VAPI session data
-          const vapiResponse = await fetch(`https://api.vapi.ai/call/${voiceSessionId}`, {
-            headers: {
-              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_VAPI_PRIVATE_KEY}`,
-            },
-          });
-
-          if (vapiResponse.ok) {
-            const vapiCallData = await vapiResponse.json();
-            console.log("VAPI call data received:", vapiCallData);
-            
-            // Process the real VAPI session data
-            await processVapiSession({
-              sessionId,
-              vapiSessionId: voiceSessionId,
-              vapiCallData,
-            });
-            
-            console.log("✅ Session processing complete with VAPI data");
-          } else {
-            throw new Error(`VAPI API error: ${vapiResponse.status}`);
-          }
-        } else {
-          throw new Error("No VAPI session ID available");
-        }
+        // Note: VAPI API calls with private keys should be handled by backend/Convex actions only
+        // Frontend should never expose private API keys for security reasons
+        // The assessment creation will be handled by the dashboard's "Create Assessment" button
+        
+        console.log("✅ Session completed. Assessment can be created from dashboard.");
       } catch (error) {
         console.error("❌ Failed to fetch VAPI data:", error);
         console.log("🔄 Falling back to basic session completion");

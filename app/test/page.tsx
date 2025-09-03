@@ -3,7 +3,8 @@
 export default function TestPage() {
   const vapiPublicKey = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
   const vapiAssistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
-  const vapiPrivateKey = process.env.NEXT_PUBLIC_VAPI_PRIVATE_KEY;
+  // Private keys should NEVER be exposed to frontend - this is a security risk
+  // const vapiPrivateKey = process.env.NEXT_PUBLIC_VAPI_PRIVATE_KEY; // REMOVED for security
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -26,9 +27,9 @@ export default function TestPage() {
           </div>
           
           <div>
-            <h3 className="font-medium text-gray-900">VAPI Private Key:</h3>
-            <p className="text-sm text-gray-600">
-              {vapiPrivateKey ? `✅ Set (${vapiPrivateKey.substring(0, 8)}...)` : "❌ Not set"}
+            <h3 className="font-medium text-red-900">VAPI Private Key:</h3>
+            <p className="text-sm text-red-600">
+              🔒 Private keys are hidden for security (backend only)
             </p>
           </div>
           
@@ -40,7 +41,7 @@ export default function TestPage() {
               <pre className="mt-2 p-2 bg-blue-100 rounded text-xs">
 {`NEXT_PUBLIC_VAPI_PUBLIC_KEY=pk_xxxx
 NEXT_PUBLIC_VAPI_ASSISTANT_ID=xxxxxxxx
-NEXT_PUBLIC_VAPI_PRIVATE_KEY=sk_xxxx`}
+# VAPI_PRIVATE_KEY=your_private_key (set in Convex dashboard, NOT here)`}
               </pre>
               <li>3. Restart the dev server</li>
             </ol>

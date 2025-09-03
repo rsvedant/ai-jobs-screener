@@ -15,8 +15,7 @@ cd ai-jobs-screener
 bun install
 
 # Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your VAPI.ai and Convex keys
+# Create .env.local with your VAPI.ai and Convex keys (see below for format)
 
 # Start development (runs Convex backend + Next.js with Turbopack)
 bun run dev
@@ -185,13 +184,15 @@ npx convex dev
 
 Create `.env.local`:
 ```bash
-# VAPI.ai Configuration
+# VAPI.ai Configuration (Frontend)
 NEXT_PUBLIC_VAPI_PUBLIC_KEY=your_vapi_public_key
 NEXT_PUBLIC_VAPI_ASSISTANT_ID=your_vapi_assistant_id
-VAPI_PRIVATE_KEY=your_vapi_private_key
 
 # Convex Configuration (auto-generated)
 NEXT_PUBLIC_CONVEX_URL=your_convex_url
+
+# NOTE: VAPI_PRIVATE_KEY should NEVER be in .env.local
+# It must be set in Convex Dashboard → Settings → Environment Variables
 ```
 
 ### Setup Steps
@@ -219,9 +220,10 @@ NEXT_PUBLIC_CONVEX_URL=your_convex_url
    - Use prompt from `prompts/blue-collar-interviewer-prompt.md`
    - Get public key, private key, and assistant ID
 
-5. **Set backend environment variables**:
+5. **Set backend environment variables** (CRITICAL SECURITY STEP):
    - Go to Convex Dashboard → Settings → Environment Variables
    - Add `VAPI_PRIVATE_KEY` with your VAPI private key
+   - ⚠️ **NEVER** put private keys in `.env.local` or frontend code
 
 6. **Start development**:
    ```bash
@@ -341,11 +343,29 @@ client.on('connected', handleConnection);
 - GDPR compliance with proper consent management
 - Role-based access control for HR teams
 
-### Authentication
-- Convex Auth integration
-- Environment variable security
-- API key rotation capabilities
-- Audit logging for compliance
+### Authentication & API Key Security
+- **Convex Auth integration** with role-based access control
+- **Secure API key management**: Private keys only in backend environment
+- **Environment variable separation**: Public keys for frontend, private keys for backend only
+- **API key rotation capabilities** for security maintenance
+- **Audit logging** for compliance and security monitoring
+- **⚠️ Security Rule**: NEVER expose private keys in frontend code or `.env.local`
+
+### Security Checklist
+
+#### ✅ **DO**
+- ✅ Use `NEXT_PUBLIC_` prefix for frontend environment variables
+- ✅ Store private keys in Convex Dashboard → Environment Variables
+- ✅ Use `process.env.VAPI_PRIVATE_KEY` only in Convex actions/mutations
+- ✅ Regularly rotate API keys
+- ✅ Monitor API usage and costs
+
+#### ❌ **DON'T**
+- ❌ Never hardcode API keys in source code
+- ❌ Never put private keys in `.env.local` or frontend
+- ❌ Never commit `.env.local` to version control
+- ❌ Never use `NEXT_PUBLIC_VAPI_PRIVATE_KEY` (this exposes it!)
+- ❌ Never make VAPI API calls with private keys from frontend
 
 ## 📊 Assessment System
 

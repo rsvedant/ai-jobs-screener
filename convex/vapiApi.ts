@@ -14,11 +14,11 @@ export const fetchVapiDataAndCreateAssessment = action({
     console.log("🔍 Fetching VAPI data for call ID:", args.vapiCallId);
     
     try {
-      // Check if VAPI key is available
-      const vapiKey = "5c78362e-9cd2-4fcc-9791-8c9ee110f80e";
+            // Check if VAPI key is available from environment
+      const vapiKey = process.env.VAPI_PRIVATE_KEY;
       console.log("🔑 VAPI Key available:", !!vapiKey);
       console.log("🔑 VAPI Key length:", vapiKey?.length || 0);
-      
+
       if (!vapiKey) {
         throw new Error("VAPI_PRIVATE_KEY environment variable not set");
       }
